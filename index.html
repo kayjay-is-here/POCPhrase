@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+    <html>
+        <head>
+            <title>Proof Of Concept</title>
+            <script src="js/md5.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
+        </head>
+        <body>
+        <h1> Proof of Concept</h1>
+            Mnemonic Phrase:
+            <input type="text" name="phrase"><br>
+            <button onclick="convertPhrase();">Click</button>
+            <br>
+            <div id="result">
+            </div>
+            <br>
+            <h3>Decoding</h3>
+            <b>Decode:</b><br>
+            Part #1
+            <input type="text" id="e_1"> <br>
+            Part#2
+            <input type="text" id="e_2"> <br>
+            Part#3
+            <input type="text" id="e_3"> <br>
+            Secret
+            <input type="text" id="secret"> <br> <br>
+            
+            <b>Keys:</b> <br>
+            
+            Key #1
+            <input type="text" id="k_1"> <br>
+            Key #2
+            <input type="text" id="k_2"><br>
+            Key #3
+            <input type="text" id="k_3"><br>
+            <button onclick="decode()">Decode</button><br>
+            <p id="decoded"></p>
+        <script>
+            function decode() {
+                let k_1 = document.getElementById("k_1").value;
+                let k_2 = document.getElementById("k_2").value;
+                let k_3 = document.getElementById("k_3").value;
+                let e_1 = document.getElementById("e_1").value;
+                let e_2 = document.getElementById("e_2").value;
+                let e_3 = document.getElementById("e_3").value;
+                let secret = document.getElementById("secret").value;
+                
+                let d_1 = a_d(e_1, k_1);
+                let d_2 = a_d(e_2, k_2);
+                let d_3 = a_d(e_3, k_3);
+                const decoded = d_1 + " " + d_2 + " " + d_3 + " " + secret;
+                console.log("Decoded Hash: " + md5(decoded));
+                document.getElementById('decoded').innerHTML = "Your Mnemonic phrase: \n" + decoded;
+            }
+            function a_d(m,k){ /* to make this easier on myself */
+                return AES_Decrypt(m,k);
+            }
+            function AES_Decrypt(message, key) {
+                //key = "U2FsdGVkX1" + key
+                var decryptedBytes = CryptoJS.AES.decrypt(message, key);
+                
+                var plaintext = decryptedBytes.toString(CryptoJS.enc.Utf8).toString();
+                //console.log(decryptedBytes);
+                //console.log(plaintext);
+                return plaintext;
+            }
+            function convertPhrase()
+            {
+            let phrase = document.getElementsByName("phrase")[0].value;
+            //debugger;
+            //console.log("original phrase: " + phrase);
+            pSplitHash(phrase);
+            }
+            function pSplitHash(phrase) {
+                
+                let words = phrase.split(' ');
+                //console.log("phrase length: " + words.length);
+                if (words.length != 12) {
+                    alert("Invalid Mnemonic");
+                    return;
+                } else {
+                phraseParts = {
+                    part1: [],
+                    part2: [],
+                    part3: [],
+                    secret: ""
+                };
+                   for (let i=0; i<12; i++) {
+                        if(i < 4) { //words 1-4, excludes 5
+                            phraseParts.part1.push(words[i]);
+                        } else if(i < 9) {
+                            phraseParts.part2.push(words[i]);
+                        } else if (i < 11) {
+                            phraseParts.part3.push(words[i]);
+                        } else { //last (12th) word
+                            phraseParts.secret = words[i]
+                        }
+                   }
+                   
+                   for (let part in phraseParts) {
+                        if(part != 'secret') {
+                            let part_spaced = phraseParts[part].join(' ');
+                            let key = prompt("insert key to encrypt");
+                            //let hash = md5(part_spaced);
+                            
+                            let encrypted = CryptoJS.AES.encrypt(part_spaced, key).toString();
+                           // encrypted = encrypted.replace("U2FsdGVkX1","");
+                            let target = document.getElementById('result');
+                            target.innerHTML+= part + ": " + encrypted + "   (key: " + key + ")<br>";
+                            //console.log(part + ": " + encrypted + "   (key: " + key + ")");
+                        } else {
+                            //console.log("secret: " + phraseParts[part]);
+                            alert("Your secret word is: \n" + phraseParts[part] + ",\n please write this down!");
+                        }
+                   }
+                   console.log("Original Hash: " + md5(phrase));
+                return;
+                }
+                
+            }
+            
+        </script>
+        </body>
+    </html>
